@@ -3,91 +3,95 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>8 Puzzle Game - PyScript</title>
-    <!-- Latest PyScript CSS and JS -->
-    <link rel="stylesheet" href="https://pyscript.net" />
+    <title>PyScript 8-Puzzle</title>
+    <link rel="stylesheet" href="https://pyscript.net">
     <script type="module" src="https://pyscript.net"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f4f4f9; padding-top: 50px; }
-        #game-board {
-            width: 200px; margin: 20px auto; display: grid;
-            grid-template-columns: repeat(3, 60px); gap: 10px;
-            background-color: #bbada0; padding: 10px; border-radius: 6px;
+        body { font-family: system-ui, sans-serif; text-align: center; background: #faf8ef; color: #776e65; }
+        #game-container { max-width: 320px; margin: 40px auto; }
+        #grid { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; 
+            background: #bbada0; padding: 10px; border-radius: 6px; 
         }
-        .tile {
-            width: 60px; height: 60px; font-size: 24px; font-weight: bold;
-            cursor: pointer; background-color: #eee4da; border: none;
-            border-radius: 4px; color: #776e65;
+        .tile { 
+            width: 80px; height: 80px; background: #eee4da; border: none;
+            border-radius: 4px; font-size: 2rem; font-weight: bold; color: #776e65;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .empty { background-color: #cdc1b4; cursor: default; }
-        #status { margin-top: 20px; font-size: 20px; color: #2ecc71; height: 30px; font-weight: bold; }
-        #reset-btn {
-            margin-top: 10px; padding: 10px 20px; font-size: 16px;
-            cursor: pointer; background-color: #8f7a66; color: white;
-            border: none; border-radius: 4px; font-weight: bold;
+        .tile:hover { background: #edc22e; color: white; }
+        .empty { background: #cdc1b4; cursor: default; }
+        .empty:hover { background: #cdc1b4; }
+        #status { height: 30px; margin: 20px; font-weight: bold; color: #2ecc71; }
+        button#reset { 
+            background: #8f7a66; color: white; border: none; padding: 10px 20px; 
+            border-radius: 4px; font-weight: bold; cursor: pointer; 
         }
     </style>
 </head>
 <body>
+    <div id="game-container">
+        <h1>8-Puzzle</h1>
+        <div id="status"></div>
+        <div id="grid"></div>
+        <br>
+        <button id="reset">New Game</button>
+    </div>
 
-    <h3>8 Puzzle Game</h3>
-    <p>Slide tiles to arrange numbers 1-8.</p>
-
-    <div id="game-board"></div>
-    <div id="status"></div>
-    <button id="reset-btn">New Game</button>
-
-    <py-script>
+    <script type="py">
         import random
-        from pyscript import document, display, when
+        from pyscript import document, when
 
-        tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+        state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
-        def is_solvable(t):
-            flat = [i for i in t if i != 0]
-            inversions = sum(1 for i in range(len(flat)) for j in range(i + 1, len(flat)) if flat[i] > flat[j])
+        def is_solvable(tiles):
+            # A puzzle is solvable if the number of inversions is even
+            flat = [t for t in tiles if t != 0]
+            inversions = sum(1 for i in range(len(flat)) for j in range(i+1, len(flat)) if flat[i] > flat[j])
             return inversions % 2 == 0
 
         def shuffle_board():
-            random.shuffle(tiles)
-            while not is_solvable(tiles) or tiles == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
-                random.shuffle(tiles)
+            global state
+            random.shuffle(state)
+            while not is_solvable(state) or state == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
+                random.shuffle(state)
+            render()
 
         def render():
-            board = document.getElementById("game-board")
-            board.innerHTML = ""
-            for i, val in enumerate(tiles):
-                btn = document.createElement("button")
-                btn.className = "tile" + (" empty" if val == 0 else "")
-                if val != 0:
-                    btn.innerText = str(val)
-                    # Register the click event using a helper to closure the index
-                    btn.onclick = create_move_handler(i)
-                board.appendChild(btn)
+            grid = document.getElementById("grid")
+            grid.innerHTML = ""
+            for i, val in enumerate(state):
+                tile = document.createElement("div")
+                tile.className = "tile" + (" empty" if val == 0 else "")
+                tile.innerText = str(val) if val != 0 else ""
+                
+                # Use a closure to capture the correct index for the click handler
+                tile.onclick = lambda e, idx=i: handle_click(idx)
+                grid.appendChild(tile)
 
-        def create_move_handler(index):
-            def handler(event):
-                empty = tiles.index(0)
-                # Adjacency check
-                r_i, c_i = index // 3, index % 3
-                r_e, c_e = empty // 3, empty % 3
-                if abs(r_i - r_e) + abs(c_i - c_e) == 1:
-                    tiles[empty], tiles[index] = tiles[index], tiles[empty]
-                    render()
-                    if tiles == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
-                        document.getElementById("status").innerText = "🎉 Solved!"
-            return handler
+        def handle_click(idx):
+            empty_idx = state.index(0)
+            
+            # Check adjacency (Up, Down, Left, Right)
+            row, col = divmod(idx, 3)
+            erow, ecol = divmod(empty_idx, 3)
+            
+            if abs(row - erow) + abs(col - ecol) == 1:
+                state[empty_idx], state[idx] = state[idx], state[state.index(0)]
+                render()
+                check_win()
 
-        @when("click", "#reset-btn")
+        def check_win():
+            if state == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
+                document.getElementById("status").innerText = "You Solved It!"
+
+        @when("click", "#reset")
         def reset_game(event):
             document.getElementById("status").innerText = ""
             shuffle_board()
-            render()
 
-        # Initial game start
+        # Initial Load
         shuffle_board()
-        render()
-    </py-script>
-
+    </script>
 </body>
 </html>
+
