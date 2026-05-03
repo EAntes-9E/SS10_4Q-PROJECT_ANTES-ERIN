@@ -3,44 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
-    <script defer src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <title>8 Puzzle Game</title>
+ 
+    <link rel="stylesheet" href="https://pyscript.net">
+    <script defer src="https://pyscript.net"></script>
     <style>
-        body { 
-            font-family: Arial; text-align: center; background-color: #f0f0f0; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f4f4f9; padding-top: 50px; }
         #game-board {
-            width: 190px;
+            width: 200px;
             margin: 20px auto;
             display: grid;
             grid-template-columns: repeat(3, 60px);
-            gap: 5px;
+            gap: 10px;
+            background-color: #bbada0;
+            padding: 10px;
+            border-radius: 6px;
         }
         .tile {
-            width: 60px; height: 60px; font-size: 18px;
-            cursor: pointer; background-color: white; border: none;
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            width: 60px; height: 60px; font-size: 24px; font-weight: bold;
+            cursor: pointer; background-color: #eee4da; border: none;
+            border-radius: 4px; color: #776e65; transition: transform 0.1s;
         }
-        .tile:active 
-        { transform: scale(0.95); 
+        .tile:hover { background-color: #edc22e; color: white; }
+        .empty { background-color: #cdc1b4; cursor: default; }
+        .empty:hover { background-color: #cdc1b4; }
+        #status { margin-top: 20px; font-size: 20px; color: #2ecc71; height: 30px; font-weight: bold; }
+        #reset-btn {
+            margin-top: 10px; padding: 10px 20px; font-size: 16px;
+            cursor: pointer; background-color: #8f7a66; color: white;
+            border: none; border-radius: 4px; font-weight: bold;
         }
-        .empty { 
-            background-color: lightgray; 
-            box-shadow: none; 
-            cursor: default; 
-        }
-        #status { 
-            margin-top: 10px; 
-            font-weight: bold; 
-            color: green; 
-        }
-        button#reset-btn { 
-            margin-top: 10px; 
-            padding: 5px 10px; 
-            cursor: pointer; 
-        }
+        #reset-btn:hover { background-color: #7f6a56; }
     </style>
-    <title>8 Puzzle</title> 
 </head>
 <body>
 
@@ -49,10 +43,74 @@
 
     <div id="game-board"></div>
     <div id="status"></div>
-    <button id="reset-btn">Reset</button>
+    <button id="reset-btn">New Game</button>
 
-    
-    <script type="py" src="main.py" config='{"packages":["js"]}'></script>
+    <script type="py">
+        import js
+        import random
+        from pyodide.ffi import create_proxy
+
+        document = js.document
+        tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+
+        def is_solvable(t):
+            flat = [i for i in t if i != 0]
+            inversions = 0
+            for i in range(len(flat)):
+                for j in range(i + 1, len(flat)):
+                    if flat[i] > flat[j]:
+                        inversions += 1
+            return inversions % 2 == 0
+
+        def shuffle():
+            random.shuffle(tiles)
+            while not is_solvable(tiles) or tiles == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
+                random.shuffle(tiles)
+
+        def render():
+            board = document.getElementById("game-board")
+            board.innerHTML = ""
+
+            for i in range(9):
+                btn = document.createElement("button")
+                if tiles[i] == 0:
+                    btn.classList.add("tile", "empty")
+                else:
+                    btn.classList.add("tile")
+                    btn.innerText = str(tiles[i])
+                    # Wrap the click handler to pass the index correctly
+                    handler = create_proxy(make_move(i))
+                    btn.addEventListener("click", handler)
+                board.appendChild(btn)
+
+        def make_move(i):
+            def move(e):
+                empty = tiles.index(0)
+                r_i, c_i = i // 3, i % 3
+                r_e, c_e = empty // 3, empty % 3
+                
+                if abs(r_i - r_e) + abs(c_i - c_e) == 1:
+                    tiles[empty], tiles[i] = tiles[i], tiles[empty]
+                    render()
+                    check_win()
+            return move
+
+        def check_win():
+            if tiles == [1, 2, 3, 4, 5, 6, 7, 8, 0]:
+                document.getElementById("status").innerText = "🎉 You solved it!"
+
+        def reset(e):
+            shuffle()
+            document.getElementById("status").innerText = ""
+            render()
+
+      
+        reset_proxy = create_proxy(reset)
+        document.getElementById("reset-btn").addEventListener("click", reset_proxy)
+        
+        shuffle()
+        render()
+    </script>
 
 </body>
 </html>
