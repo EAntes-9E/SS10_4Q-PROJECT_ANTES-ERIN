@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script defer src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        #game-board {
+            width: 190px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            gap: 5px;
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: white;
+            border: none;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tile:active {
+            transform: scale(0.95);
+        }
+
+        .empty {
+            background-color: lightgray;
+            box-shadow: none;
+        }
+
+        #status {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+  <title>8 Puzzle</title
+</head>
+
+<body>
+
+    <h3>8 Puzzle</h3>
+    <p>Arrange the numbers from 1 to 8</p>
+
+    <div id="game-board"></div>
+    <div id="status"></div>
+    <button id="reset-btn">Reset</button>
+
+  <div>
+    <py-script src="main.py"></py-script>
+  </div>
