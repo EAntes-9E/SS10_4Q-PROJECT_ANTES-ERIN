@@ -1,5 +1,4 @@
-from pyscript import display, document
-
+from js import document
 
 tiles = [1,2,3,4,5,6,7,8,0]
 
